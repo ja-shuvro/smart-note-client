@@ -1,12 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { notesApi } from '../api/notes-api';
 import { usersApi } from '../api/users-api';
-import type { Note, User, PaginationMeta, UserRole } from '../types';
+import { postsApi } from '../api/posts-api';
+import type { Note, User, Post, PaginationMeta, UserRole, PostStatus } from '../types';
 import { Pagination } from '../components/common/Pagination';
-import { Users, FileText, Trash2, Plus, X, UserCheck } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  Trash2,
+  Plus,
+  X,
+  UserCheck,
+  Share2,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Check,
+} from 'lucide-react';
 
 export const AdminPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'notes' | 'users'>('notes');
+  const [activeTab, setActiveTab] = useState<'notes' | 'users' | 'posts'>('notes');
 
   // Notes state
   const [allNotes, setAllNotes] = useState<Note[]>([]);
@@ -19,6 +32,14 @@ export const AdminPage: React.FC = () => {
   const [usersPagination, setUsersPagination] = useState<PaginationMeta | undefined>();
   const [usersPage, setUsersPage] = useState<number>(1);
   const [usersLoading, setUsersLoading] = useState<boolean>(true);
+
+  // Posts state (Business Approval Workflow)
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsPagination, setPostsPagination] = useState<PaginationMeta | undefined>();
+  const [postsPage, setPostsPage] = useState<number>(1);
+  const [postsFilter, setPostsFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [postsLoading, setPostsLoading] = useState<boolean>(true);
+
 
   // Add User modal state
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState<boolean>(false);
@@ -61,13 +82,50 @@ export const AdminPage: React.FC = () => {
     }
   }, []);
 
+  const fetchPosts = useCallback(async (p = 1, filter = postsFilter) => {
+    setPostsLoading(true);
+    setError(null);
+    try {
+      const res = await postsApi.getPosts(p, 8, filter);
+      setPosts(res.data);
+      setPostsPagination(res.pagination);
+      setPostsPage(p);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch posts');
+    } finally {
+      setPostsLoading(false);
+    }
+  }, [postsFilter]);
+
   useEffect(() => {
     if (activeTab === 'notes') {
       fetchAllNotes(notesPage);
-    } else {
+    } else if (activeTab === 'users') {
       fetchUsers(usersPage);
+    } else if (activeTab === 'posts') {
+      fetchPosts(postsPage, postsFilter);
     }
-  }, [activeTab, fetchAllNotes, fetchUsers, notesPage, usersPage]);
+  }, [activeTab, fetchAllNotes, fetchUsers, fetchPosts, notesPage, usersPage, postsPage, postsFilter]);
+
+  const handleUpdatePostStatus = async (id: string, status: PostStatus) => {
+    try {
+      await postsApi.updateStatus(id, status);
+      fetchPosts(postsPage, postsFilter);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update post status');
+    }
+  };
+
+  const handleDeletePost = async (id: string) => {
+    if (!window.confirm('Delete this post permanently as Administrator?')) return;
+    try {
+      await postsApi.deletePost(id);
+      fetchPosts(postsPage, postsFilter);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete post');
+    }
+  };
+
 
   const handleDeleteNote = async (id: string) => {
     if (!window.confirm('Delete this user note permanently as Administrator?')) return;
@@ -169,7 +227,15 @@ export const AdminPage: React.FC = () => {
           <Users size={16} />
           <span>User Directory</span>
         </button>
+        <button
+          className={`btn ${activeTab === 'posts' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setActiveTab('posts')}
+        >
+          <Share2 size={16} />
+          <span>Post Approvals</span>
+        </button>
       </div>
+
 
       {/* Tab 1: All System Notes */}
       {activeTab === 'notes' && (
@@ -312,6 +378,190 @@ export const AdminPage: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Tab 3: Post Moderation (Business Approval Workflow) */}
+      {activeTab === 'posts' && (
+        <div>
+          {/* Status Filters */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            {(['all', 'pending', 'approved', 'rejected'] as const).map((filterKey) => (
+              <button
+                key={filterKey}
+                className={`btn btn-sm ${postsFilter === filterKey ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => {
+                  setPostsFilter(filterKey);
+                  fetchPosts(1, filterKey);
+                }}
+                style={{ textTransform: 'capitalize' }}
+              >
+                {filterKey === 'pending' && <Clock size={12} />}
+                {filterKey === 'approved' && <CheckCircle size={12} />}
+                {filterKey === 'rejected' && <XCircle size={12} />}
+                <span>{filterKey === 'all' ? 'All Posts' : filterKey}</span>
+              </button>
+            ))}
+          </div>
+
+          {postsLoading ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+              Loading posts for moderation...
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+              No {postsFilter !== 'all' ? postsFilter : ''} posts found.
+            </div>
+          ) : (
+            <>
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Content Snippet</th>
+                      <th>Author</th>
+                      <th>Status</th>
+                      <th>Submitted</th>
+                      <th>Approval Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {posts.map((post) => {
+                      const author = typeof post.authorId === 'object' ? post.authorId : null;
+                      return (
+                        <tr key={post._id}>
+                          <td style={{ fontWeight: 600, color: '#fff' }}>{post.title}</td>
+                          <td
+                            style={{
+                              maxWidth: '280px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {post.content}
+                          </td>
+                          <td>
+                            {author ? (
+                              <div>
+                                <div style={{ fontWeight: 500 }}>{author.name}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  {author.email}
+                                </div>
+                              </div>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)' }}>{String(post.authorId)}</span>
+                            )}
+                          </td>
+                          <td>
+                            {post.status === 'approved' ? (
+                              <span
+                                className="badge"
+                                style={{
+                                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                  color: '#10b981',
+                                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontSize: '0.75rem',
+                                  padding: '0.15rem 0.45rem',
+                                }}
+                              >
+                                <CheckCircle size={11} />
+                                <span>Approved</span>
+                              </span>
+                            ) : post.status === 'rejected' ? (
+                              <span
+                                className="badge"
+                                style={{
+                                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                                  color: '#ef4444',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontSize: '0.75rem',
+                                  padding: '0.15rem 0.45rem',
+                                }}
+                              >
+                                <XCircle size={11} />
+                                <span>Rejected</span>
+                              </span>
+                            ) : (
+                              <span
+                                className="badge"
+                                style={{
+                                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                  color: '#f59e0b',
+                                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontSize: '0.75rem',
+                                  padding: '0.15rem 0.45rem',
+                                }}
+                              >
+                                <Clock size={11} />
+                                <span>Pending Approval</span>
+                              </span>
+                            )}
+                          </td>
+                          <td>{new Date(post.createdAt).toLocaleDateString()}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.35rem' }}>
+                              {post.status !== 'approved' && (
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  style={{
+                                    padding: '0.2rem 0.45rem',
+                                    fontSize: '0.75rem',
+                                    backgroundColor: '#059669',
+                                    borderColor: '#059669',
+                                  }}
+                                  onClick={() => handleUpdatePostStatus(post._id, 'approved')}
+                                  title="Approve this post"
+                                >
+                                  <Check size={12} />
+                                  <span>Approve</span>
+                                </button>
+                              )}
+                              {post.status !== 'rejected' && (
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  style={{
+                                    padding: '0.2rem 0.45rem',
+                                    fontSize: '0.75rem',
+                                    color: '#f87171',
+                                  }}
+                                  onClick={() => handleUpdatePostStatus(post._id, 'rejected')}
+                                  title="Reject this post"
+                                >
+                                  <X size={12} />
+                                  <span>Reject</span>
+                                </button>
+                              )}
+                              <button
+                                className="btn btn-danger btn-sm"
+                                style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}
+                                onClick={() => handleDeletePost(post._id)}
+                                title="Delete post permanently"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination meta={postsPagination} onPageChange={(p) => setPostsPage(p)} />
+            </>
+          )}
+        </div>
+      )}
+
 
       {/* Add User Modal */}
       {isAddUserModalOpen && (

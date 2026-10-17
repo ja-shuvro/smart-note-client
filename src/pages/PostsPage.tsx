@@ -1,12 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { aggregationsApi } from '../api/aggregations-api';
+import { postsApi } from '../api/posts-api';
 import { usersApi } from '../api/users-api';
 import { useAuth } from '../context/auth-context';
-import type { User, UserWithPosts } from '../types';
-import { Share2, Plus, Code, ChevronDown, ChevronUp, Calendar, User as UserIcon, X } from 'lucide-react';
+import type { User, UserWithPosts, PostStatus } from '../types';
+import {
+  Share2,
+  Plus,
+  Code,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  User as UserIcon,
+  X,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Check,
+} from 'lucide-react';
 
 export const PostsPage: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAdmin } = useAuth();
+
   const [usersList, setUsersList] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [userWithPosts, setUserWithPosts] = useState<UserWithPosts | null>(null);
@@ -67,7 +82,7 @@ export const PostsPage: React.FC = () => {
     e.preventDefault();
     setPublishing(true);
     try {
-      await aggregationsApi.createPost(postTitle, postContent);
+      await postsApi.createPost(postTitle, postContent);
       setIsModalOpen(false);
       setPostTitle('');
       setPostContent('');
@@ -82,6 +97,18 @@ export const PostsPage: React.FC = () => {
       setPublishing(false);
     }
   };
+
+  const handleUpdateStatus = async (postId: string, status: PostStatus) => {
+    try {
+      await postsApi.updateStatus(postId, status);
+      if (selectedUserId) {
+        fetchUserPosts(selectedUserId);
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update post status');
+    }
+  };
+
 
   return (
     <div>
@@ -231,12 +258,115 @@ export const PostsPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {userWithPosts.posts.map((post) => (
                 <div key={post._id} className="card">
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#fff', marginBottom: '0.5rem' }}>
-                    {post.title}
-                  </h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', whiteSpace: 'pre-wrap', marginBottom: '0.85rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '0.75rem',
+                      flexWrap: 'wrap',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#fff' }}>
+                      {post.title}
+                    </h3>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {post.status === 'approved' ? (
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10b981',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.5rem',
+                          }}
+                        >
+                          <CheckCircle size={12} />
+                          <span>Approved</span>
+                        </span>
+                      ) : post.status === 'rejected' ? (
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                            color: '#ef4444',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.5rem',
+                          }}
+                        >
+                          <XCircle size={12} />
+                          <span>Rejected</span>
+                        </span>
+                      ) : (
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                            color: '#f59e0b',
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.5rem',
+                          }}
+                        >
+                          <Clock size={12} />
+                          <span>Pending Approval</span>
+                        </span>
+                      )}
+
+                      {isAdmin && post.status === 'pending' && (
+                        <div style={{ display: 'flex', gap: '0.35rem' }}>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{
+                              padding: '0.25rem 0.6rem',
+                              fontSize: '0.75rem',
+                              backgroundColor: '#059669',
+                              borderColor: '#059669',
+                            }}
+                            title="Approve Post"
+                            onClick={() => handleUpdateStatus(post._id, 'approved')}
+                          >
+                            <Check size={12} />
+                            <span>Approve</span>
+                          </button>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                            title="Reject Post"
+                            onClick={() => handleUpdateStatus(post._id, 'rejected')}
+                          >
+                            <X size={12} />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p
+                    style={{
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.925rem',
+                      whiteSpace: 'pre-wrap',
+                      marginBottom: '0.85rem',
+                    }}
+                  >
                     {post.content}
                   </p>
+
                   <div
                     style={{
                       display: 'flex',
@@ -249,11 +379,18 @@ export const PostsPage: React.FC = () => {
                     }}
                   >
                     <Calendar size={12} />
-                    <span>Published on {new Date(post.createdAt).toLocaleDateString()} at {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>
+                      Published on {new Date(post.createdAt).toLocaleDateString()} at{' '}
+                      {new Date(post.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
+
           )}
         </div>
       ) : null}

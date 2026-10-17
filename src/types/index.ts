@@ -19,14 +19,20 @@ export interface Note {
   updatedAt: string;
 }
 
+export type PostStatus = 'pending' | 'approved' | 'rejected';
+
 export interface Post {
   _id: string;
   title: string;
   content: string;
   authorId: string | { _id: string; name: string; email: string; role: string };
+  status: PostStatus;
+  approvedBy?: string | { _id: string; name: string; email: string };
+  approvedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface PaginationMeta {
   page: number;
