@@ -1,32 +1,61 @@
-# React + TypeScript + Vite
+# NT Tech Innovation — Full Stack Client Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Frontend client application built with React 19, TypeScript, and Vite. Designed with responsive UI, custom CSS theme tokens, protected routing, and automated UI testing.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 1. Quick Start & Setup
 
-## React Compiler
+### Prerequisites
+- Node.js (v20+ recommended)
+- Running backend server (defaults to `http://localhost:5000`)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Installation & Run
+```bash
+cd client
+npm install
 
-## Expanding the Oxlint configuration
+# Setup environment variables
+cp .env.example .env
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+# Run automated component & page tests
+npm test
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+# Run tests in watch mode
+npm run test:watch
+
+# Start local dev server (Runs on http://localhost:5173)
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 2. Environment Configuration (`.env`)
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | Base endpoint for REST API | `/api` (proxied in Vite to `http://localhost:5000`) |
+
+---
+
+## 3. Automated Testing Suite
+
+Built with **Vitest**, **React Testing Library**, and **jsdom**.
+
+```bash
+npm test
+```
+
+### Coverage:
+- **`Pagination.test.tsx`**: Tests pagination boundaries, page transitions, and disabled states.
+- **`ProtectedRoute.test.tsx`**: Tests session loading states, unauthenticated redirection to `/login`, and RBAC admin protection.
+- **`LoginPage.test.tsx`**: Tests form input states, reviewer quick demo auto-fill, successful login dispatch, and error state alerts.
+
+---
+
+## 4. Production Build
+
+```bash
+npm run build
+npm run preview
+```
