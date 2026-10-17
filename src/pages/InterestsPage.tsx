@@ -39,7 +39,7 @@ export const InterestsPage: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button className="btn btn-secondary" onClick={() => setShowQuery(!showQuery)}>
             <Code size={16} />
             <span>{showQuery ? 'Hide MongoDB Pipeline' : 'Inspect Pipeline Code'}</span>

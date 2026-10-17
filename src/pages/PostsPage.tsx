@@ -416,7 +416,7 @@ export const PostsPage: React.FC = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {activeTab === 'lookup' && (
             <button className="btn btn-secondary" onClick={() => setShowQuery(!showQuery)}>
               <Code size={16} />
@@ -432,7 +432,7 @@ export const PostsPage: React.FC = () => {
       </div>
 
       {/* Tabs Switcher */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
         <button
           className={`btn ${activeTab === 'feed' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('feed')}

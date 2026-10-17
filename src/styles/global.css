@@ -412,3 +412,181 @@ button, input, textarea, select {
   font-size: 0.9rem;
   margin-top: 0.25rem;
 }
+
+/* Mobile Navigation */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 6px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.mobile-menu-toggle:hover {
+  background-color: var(--bg-surface-elevated);
+  border-color: #475569;
+}
+
+.mobile-menu-dropdown {
+  display: none;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-md);
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-user-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.mobile-nav-link:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-elevated);
+}
+
+.mobile-nav-link.active {
+  color: #fff;
+  background-color: var(--color-primary);
+}
+
+.mobile-logout-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Comprehensive Responsive Breakpoints */
+@media (max-width: 820px) {
+  .nav-desktop {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .mobile-menu-dropdown {
+    display: flex;
+  }
+
+  .main-content {
+    padding: 1.25rem 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .notes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.15rem;
+  }
+
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    padding: 1.25rem 1rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 95vw;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .data-table {
+    min-width: 580px;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 1rem 0.65rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.825rem;
+  }
+
+  .btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.825rem;
+  }
+
+  .card {
+    padding: 0.95rem;
+  }
+
+  .modal-content {
+    padding: 1rem 0.75rem;
+  }
+}

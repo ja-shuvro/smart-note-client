@@ -212,7 +212,7 @@ export const AdminPage: React.FC = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       {/* Tab Switcher */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
         <button
           className={`btn ${activeTab === 'notes' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('notes')}
