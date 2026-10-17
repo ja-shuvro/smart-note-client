@@ -12,10 +12,10 @@ export const postsApi = {
     });
   },
 
-  createPost: async (title: string, content: string) => {
+  createPost: async (title: string, content: string, tags: string[] = []) => {
     return apiFetch<Post>('/posts', {
       method: 'POST',
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, tags }),
     });
   },
 

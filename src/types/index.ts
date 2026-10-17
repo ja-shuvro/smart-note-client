@@ -25,6 +25,8 @@ export interface Post {
   _id: string;
   title: string;
   content: string;
+  tags?: string[];
+  matchScore?: number;
   authorId: string | { _id: string; name: string; email: string; role: string };
   status: PostStatus;
   approvedBy?: string | { _id: string; name: string; email: string };

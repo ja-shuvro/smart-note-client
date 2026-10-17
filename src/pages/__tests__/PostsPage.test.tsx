@@ -76,6 +76,19 @@ describe('PostsPage Component - Business Approval Flow', () => {
       message: 'User posts aggregated',
       data: mockUserWithPosts,
     });
+    vi.mocked(postsApi.getPosts).mockResolvedValue({
+      success: true,
+      message: 'Posts retrieved',
+      data: mockUserWithPosts.posts,
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 2,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      },
+    });
   });
 
   it('should render posts with status badges for standard user without approval action buttons', async () => {
@@ -182,6 +195,71 @@ describe('PostsPage Component - Business Approval Flow', () => {
       expect(postsApi.createPost).toHaveBeenCalledWith(
         'Fresh Post Submission',
         'Content awaiting admin signoff'
+      );
+    });
+  });
+
+  it('should send tags when provided in new post modal and toggle tabs', async () => {
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: mockUser,
+      token: 'jwt-user',
+      isAuthenticated: true,
+      isAdmin: false,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    vi.mocked(postsApi.createPost).mockResolvedValueOnce({
+      success: true,
+      message: 'Post created with tags',
+      data: {
+        _id: 'p4',
+        title: 'Tagged Post',
+        content: 'Post with custom interest tags',
+        tags: ['technology', 'art'],
+        authorId: 'u1',
+        status: 'pending',
+        createdAt: '2026-03-04T10:00:00Z',
+        updatedAt: '2026-03-04T10:00:00Z',
+      },
+    });
+
+    render(<PostsPage />);
+
+    // Check feed personalization banner is visible
+    expect(screen.getByText(/feed personalization active/i)).toBeInTheDocument();
+
+    // Switch to Scenario 2 lookup tab
+    fireEvent.click(screen.getByRole('button', { name: /user lookup/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Select User to Aggregate:')).toBeInTheDocument();
+    });
+
+    // Switch back to Feed
+    fireEvent.click(screen.getByRole('button', { name: /personalized feed/i }));
+
+    // Create post with tags
+    fireEvent.click(screen.getByRole('button', { name: /new post/i }));
+    fireEvent.change(screen.getByPlaceholderText('e.g. Indexing vs Aggregation in MongoDB'), {
+      target: { value: 'Tagged Post' },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText('e.g. javascript, react, mongodb, architecture'),
+      {
+        target: { value: 'technology, art' },
+      }
+    );
+    fireEvent.change(screen.getByPlaceholderText('Write the public post content here...'), {
+      target: { value: 'Post with custom interest tags' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish Post' }));
+
+    await waitFor(() => {
+      expect(postsApi.createPost).toHaveBeenCalledWith(
+        'Tagged Post',
+        'Post with custom interest tags',
+        ['technology', 'art']
       );
     });
   });
