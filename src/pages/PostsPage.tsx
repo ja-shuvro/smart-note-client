@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { aggregationsApi } from '../api/aggregations-api';
 import { postsApi } from '../api/posts-api';
 import { usersApi } from '../api/users-api';
+import { aiApi } from '../api/ai-api';
 import { useAuth } from '../context/auth-context';
 import type { User, UserWithPosts, Post, PostStatus, PaginationMeta } from '../types';
 import { Pagination } from '../components/common/Pagination';
@@ -20,6 +21,7 @@ import {
   Check,
   Sparkles,
   Tag,
+  Cpu,
 } from 'lucide-react';
 
 export const PostsPage: React.FC = () => {
@@ -49,6 +51,8 @@ export const PostsPage: React.FC = () => {
   const [postTags, setPostTags] = useState('');
   const [postContent, setPostContent] = useState('');
   const [publishing, setPublishing] = useState(false);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiMeta, setAiMeta] = useState<{ category: string; confidence: number; engine: string } | null>(null);
 
   // Normalize user interests for UI badge highlighting
   const userInterests = (currentUser?.interests || []).map((i) => i.toLowerCase().trim());
@@ -135,6 +139,7 @@ export const PostsPage: React.FC = () => {
       setPostTitle('');
       setPostTags('');
       setPostContent('');
+      setAiMeta(null);
 
       // Refresh data
       fetchFeed(1);
@@ -145,6 +150,29 @@ export const PostsPage: React.FC = () => {
       alert(err instanceof Error ? err.message : 'Error publishing post');
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleAiSuggestTags = async () => {
+    if (!postTitle.trim() && !postContent.trim()) {
+      alert('Please enter a Title or Content first so AI can classify topics!');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const res = await aiApi.suggestTags(postTitle || 'Untitled Post', postContent || postTitle);
+      if (res.data.tags && res.data.tags.length > 0) {
+        setPostTags(res.data.tags.join(', '));
+        setAiMeta({
+          category: res.data.category,
+          confidence: res.data.confidence,
+          engine: res.data.engine,
+        });
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'AI classification failed');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -641,10 +669,31 @@ export const PostsPage: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Tag size={14} />
-                  <span>Topic Tags (comma-separated interests)</span>
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                    <Tag size={14} />
+                    <span>Topic Tags (comma-separated interests)</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    style={{
+                      padding: '0.2rem 0.55rem',
+                      fontSize: '0.75rem',
+                      borderColor: '#6366f1',
+                      color: '#a5b4fc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    disabled={aiLoading}
+                    onClick={handleAiSuggestTags}
+                    title="Auto-detect categories & tags using AI"
+                  >
+                    <Sparkles size={12} color="#818cf8" />
+                    <span>{aiLoading ? 'Analyzing...' : 'AI Auto-Tag'}</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   className="form-input"
@@ -652,7 +701,31 @@ export const PostsPage: React.FC = () => {
                   onChange={(e) => setPostTags(e.target.value)}
                   placeholder="e.g. javascript, react, mongodb, architecture"
                 />
-                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                {aiMeta && (
+                  <div
+                    style={{
+                      marginTop: '0.35rem',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        color: '#c7d2fe',
+                        padding: '0.15rem 0.4rem',
+                        fontSize: '0.7rem',
+                      }}
+                    >
+                      AI: {aiMeta.category} ({Math.round(aiMeta.confidence * 100)}% match)
+                    </span>
+                    <span style={{ color: 'var(--text-muted)' }}>via {aiMeta.engine}</span>
+                  </div>
+                )}
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>
                   Tip: Posts with tags matching users' interests will be prioritized in their feed.
                 </small>
               </div>

@@ -4,6 +4,7 @@ import { PostsPage } from '../PostsPage';
 import { aggregationsApi } from '../../api/aggregations-api';
 import { postsApi } from '../../api/posts-api';
 import { usersApi } from '../../api/users-api';
+import { aiApi } from '../../api/ai-api';
 import * as AuthContextModule from '../../context/auth-context';
 import type { UserWithPosts, User } from '../../types';
 
@@ -25,6 +26,12 @@ vi.mock('../../api/posts-api', () => ({
 vi.mock('../../api/users-api', () => ({
   usersApi: {
     getUsers: vi.fn(),
+  },
+}));
+
+vi.mock('../../api/ai-api', () => ({
+  aiApi: {
+    suggestTags: vi.fn(),
   },
 }));
 
@@ -261,6 +268,54 @@ describe('PostsPage Component - Business Approval Flow', () => {
         'Post with custom interest tags',
         ['technology', 'art']
       );
+    });
+  });
+
+  it('should auto-populate tags and show category when AI Auto-Tag button is clicked', async () => {
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: mockUser,
+      token: 'jwt-user',
+      isAuthenticated: true,
+      isAdmin: false,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    vi.mocked(aiApi.suggestTags).mockResolvedValueOnce({
+      success: true,
+      message: 'AI tags generated',
+      data: {
+        tags: ['mongodb', 'indexing', 'database'],
+        category: 'Database',
+        confidence: 0.94,
+        engine: 'local-nlp',
+      },
+    });
+
+    render(<PostsPage />);
+
+    // Open modal
+    fireEvent.click(screen.getByRole('button', { name: /new post/i }));
+
+    const titleInput = screen.getByPlaceholderText('e.g. Indexing vs Aggregation in MongoDB');
+    fireEvent.change(titleInput, { target: { value: 'MongoDB Indexing Deep Dive' } });
+
+    // Click AI Auto-Tag
+    const aiBtn = screen.getByRole('button', { name: /ai auto-tag/i });
+    expect(aiBtn).toBeInTheDocument();
+    fireEvent.click(aiBtn);
+
+    await waitFor(() => {
+      expect(aiApi.suggestTags).toHaveBeenCalledWith(
+        'MongoDB Indexing Deep Dive',
+        'MongoDB Indexing Deep Dive'
+      );
+      const tagsInput = screen.getByPlaceholderText(
+        'e.g. javascript, react, mongodb, architecture'
+      ) as HTMLInputElement;
+      expect(tagsInput.value).toBe('mongodb, indexing, database');
+      expect(screen.getByText(/AI: Database \(94% match\)/i)).toBeInTheDocument();
     });
   });
 });
