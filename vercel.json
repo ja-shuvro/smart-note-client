@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://cottagehomecare-server.vercel.app/api/:path*"
+      "destination": "https://smart-note-server-gamma.vercel.app/api/:path*"
     },
     {
       "source": "/(.*)",

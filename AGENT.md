@@ -64,7 +64,7 @@ client/
 - **Base URL Resolution:**
   - `import.meta.env.VITE_API_BASE_URL || '/api'`.
   - In Dev: Vite proxy forwards `/api` to `http://localhost:5000`.
-  - In Production: `vercel.json` rewrites `/api/:path*` to `https://cottagehomecare-server.vercel.app/api/:path*`.
+  - In Production: `vercel.json` rewrites `/api/:path*` to `https://smart-note-gamma-server.vercel.app/api/:path*`.
 - **Token Handling:** Automatically injects `Authorization: Bearer <token>` from `localStorage`.
 - **Safe Response Handling:** Checks `content-type.includes('application/json')` before calling `response.json()`, preventing HTML error crashes.
 - **Auto Logout:** On `401 Unauthorized`, clears session and dispatches `auth-expired` event.

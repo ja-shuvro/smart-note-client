@@ -21,7 +21,6 @@ import {
   Check,
   Sparkles,
   Tag,
-  Cpu,
 } from 'lucide-react';
 
 export const PostsPage: React.FC = () => {
